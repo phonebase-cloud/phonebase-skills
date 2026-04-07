@@ -1,0 +1,188 @@
+---
+name: phonebase
+description: Control Android cloud phones via the `pb` CLI. Make sure to use this skill whenever the user mentions logging into apps, installing apps, browsing on a phone, opening an app (Twitter, Google Play, WeChat, Instagram, TikTok, WhatsApp, Telegram, etc.), searching on phone, checking what's on screen, taking screenshots, tapping buttons, typing text, swiping, or any task that involves an Android device. This skill applies even if the user doesn't say "phone" or "pb" — phrases like "help me log in to Twitter", "install WeChat", "open Google Play", "search for something", or "check the screen" all imply phone operation. Always prefer pb over desktop browsers or Playwright for mobile and app tasks.
+---
+
+# PhoneBase Cloud Phone Control
+
+You have access to an Android cloud phone through the `pb` CLI. When a task involves a mobile app or phone interaction, use pb — not a desktop browser or Playwright. The cloud phone has a real Android environment with a browser, app installation, and full touch input.
+
+## Installation Check
+
+Before doing anything else, verify `pb` is installed:
+
+```
+pb --version
+```
+
+If the command is not found, install it with the official one-liner:
+
+```
+curl -fsSL https://get.phonebase.cloud | sh
+```
+
+This downloads a prebuilt binary for the current platform (macOS arm64/x64, Linux arm64/x64) from `https://github.com/phonebase-cloud/phonebase-cli/releases`. The installer prints the exact download URL before fetching, and places `pb` in `/usr/local/bin` or `~/.local/bin`. If it lands in `~/.local/bin`, follow the printed PATH hint, then re-run `pb --version` to confirm.
+
+Do **not** try to invent alternative install commands or build from source — always use the curl one-liner above. Only proceed to Authentication after `pb --version` succeeds.
+
+## Authentication
+
+If pb is not yet configured, the user needs to authenticate first:
+
+```
+pb login              # browser-based login (interactive)
+pb apikey <key>       # or set API key directly
+pb status             # verify authentication works
+```
+
+If any pb command returns a successful response, authentication is already in place — skip this step.
+
+## Connection
+
+```
+pb devices            # list available devices
+pb connect <id>       # connect to a device (starts daemon automatically)
+pb disconnect         # disconnect when done
+```
+
+## Why Aliases Matter
+
+pb wraps common Android operations (am start, input tap, pm list, etc.) as simple CLI aliases. These aliases return structured JSON and handle errors consistently. Using `pb shell "am start ..."` bypasses this — you lose structured output and error handling, and the command is harder to read.
+
+Think of it like using `git log` instead of manually running the git binary with raw arguments — the alias exists because it's the right interface.
+
+| Shell command (avoid) | Alias (use this) |
+|---|---|
+| `pb shell "am start -a ACTION"` | `pb start -a ACTION` |
+| `pb shell "am force-stop PKG"` | `pb force-stop PKG` |
+| `pb shell "pm list packages"` | `pb packages` |
+| `pb shell "input tap X Y"` | `pb tap X Y` |
+| `pb shell "input text STR"` | `pb text STR` |
+| `pb shell "input swipe X1 Y1 X2 Y2"` | `pb swipe X1 Y1 X2 Y2` |
+| `pb shell "input keyevent KEY"` | `pb keyevent KEY` |
+
+**Alias parameter limits:** `pb start` supports `-a` (action), `-n` (component), `-d` (data), `-t` (type), and positional package name. It does not support extras flags like `--es` or `--ei`. When you need extras or other advanced intent parameters, use the `-j` JSON mode instead of falling back to `pb shell`:
+
+```
+pb -j '{"action":"android.settings.ADD_ACCOUNT_SETTINGS","extras":{"account_types":"com.google"}}' activity/start_activity
+```
+
+The `-j` flag sends a raw JSON body directly to the API path, bypassing alias parsing. This gives you full control over parameters while still getting structured JSON output. Reserve `pb shell` only for commands that are not Android API calls — like `pb shell "cat /proc/cpuinfo"` or `pb shell "getprop ro.build.version.sdk"`.
+
+## Observing the Screen
+
+`pb dumpc` is the primary way to see what's on screen. It returns a compact text tree with every UI element's text, resource ID, bounds (coordinates), and whether it's clickable. This is everything you need to decide what to tap next — and it's text, so you can reason about it directly.
+
+`pb screencap` takes a screenshot image. This is only useful when the screen contains visual-only content with no text elements — like a video player, game, or canvas. In every other case, dumpc gives you more actionable information faster.
+
+**Example:** If dumpc shows `android.widget.Button text="NEXT" bounds=[756,2194][1020,2338]`, you know to tap the center: `pb tap 888 2266`. No screenshot needed.
+
+## Command Reference
+
+### Observe
+| Command | Purpose |
+|---|---|
+| `pb dumpc` | Compact UI tree — text, bounds, clickable state (preferred) |
+| `pb dump` | Full XML accessibility tree (when you need resource IDs or hierarchy) |
+| `pb screencap` | Screenshot image (only for visual-only content like video/game) |
+| `pb inspect` | UI inspection — accessibility tree + marked screenshot |
+
+### Touch & Input
+| Command | Purpose |
+|---|---|
+| `pb tap <x> <y>` | Tap at coordinates |
+| `pb swipe <x1> <y1> <x2> <y2>` | Swipe between two points |
+| `pb text <string>` | Type text into focused field |
+| `pb keyevent <code>` | Send key event (4=Back, 3=Home, 66=Enter, 82=Menu) |
+
+### App Management
+| Command | Purpose |
+|---|---|
+| `pb launch <package>` | Launch app by package name |
+| `pb start <package\|flags>` | Start activity with flags (-a/-n/-d/-t) |
+| `pb force-stop <package>` | Force stop an app |
+| `pb packages` | List all installed packages |
+| `pb install <path\|--uri url>` | Install APK from local file or download URL |
+| `pb uninstall <package>` | Uninstall an app |
+
+### Browser & Navigation
+| Command | Purpose |
+|---|---|
+| `pb browse <url>` | Open URL in best available browser on the phone |
+| `pb top-activity` | Show current foreground activity |
+
+### Files & Clipboard
+| Command | Purpose |
+|---|---|
+| `pb ls <path>` | List files on device |
+| `pb push <local> <remote>` | Upload file to device |
+| `pb pull <remote>` | Download file from device |
+| `pb clipboard` | Get or set clipboard content |
+
+### System
+| Command | Purpose |
+|---|---|
+| `pb shell <cmd>` | Raw shell command (only for non-API commands) |
+| `pb display` | Screen resolution and density info |
+
+### Discovery
+| Command | Purpose |
+|---|---|
+| `pb list` | List all available API paths (filtered, hides aliased ones) |
+| `pb list <filter>` | Filter API paths by keyword |
+| `pb info <alias>` | Show details of a specific alias or API path |
+| `pb --help` | Full help with alias list and usage |
+
+When you encounter a task not covered by the aliases above, run `pb list` to discover additional API paths, or `pb info <name>` to get parameter details.
+
+## Advanced: JSON Mode
+
+For complex API calls that go beyond what aliases support, use `-j` to pass a full JSON body:
+
+```
+pb -j '{"package_name":"com.example","class_name":".MainActivity"}' activity/start_activity
+```
+
+You can also read JSON from a file with `-f`:
+
+```
+pb -f params.json activity/start_activity
+pb -f - activity/start_activity    # read from stdin
+```
+
+This is the preferred escape hatch when aliases don't cover your parameters — it still goes through the structured API and returns JSON. Only use `pb shell` for raw Linux commands that aren't part of the phone's control API.
+
+## Output Format
+
+Every pb command returns JSON to stdout:
+```json
+{"code": 200, "data": ..., "msg": "OK"}
+```
+Human-readable messages and logs go to stderr — ignore stderr when parsing responses.
+
+## Interaction Pattern
+
+The core loop for operating the phone:
+
+1. **Observe** — `pb dumpc` to see current screen state
+2. **Locate** — find the target element's bounds in the output
+3. **Act** — `pb tap <center_x> <center_y>` to interact (calculate center from bounds)
+4. **Verify** — `pb dumpc` again to confirm the action worked
+5. **Repeat** as needed
+
+Common gestures:
+- Scroll down: `pb swipe 540 1500 540 500`
+- Scroll up: `pb swipe 540 500 540 1500`
+- Go back: `pb keyevent 4`
+- Go home: `pb keyevent 3`
+
+## Detailed Operation Guides
+
+For multi-step tasks, read the relevant guide from `~/.phonebase/skills/` before starting. Each guide is a Claude-standard skill living at `<name>/SKILL.md`:
+
+| Guide | Path | Read it when... |
+|---|---|---|
+| install-app | `~/.phonebase/skills/install-app/SKILL.md` | You need to search for, download, and install an Android app |
+| web-search | `~/.phonebase/skills/web-search/SKILL.md` | You need to search the web using the phone's browser |
+
+Run `pb skills list` to see all installed guides with their enabled/disabled status. Only read guides that show `enabled`. Use `pb skills install <path-or-url>` to add third-party guides; they appear alongside the built-in ones. Additional guides may exist — run `ls ~/.phonebase/skills/` to see what's there, then read `<dir>/SKILL.md` inside.
