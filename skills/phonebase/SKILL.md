@@ -176,13 +176,43 @@ Common gestures:
 - Go back: `pb keyevent 4`
 - Go home: `pb keyevent 3`
 
-## Detailed Operation Guides
+## App Skills — Check Before You Act
 
-For multi-step tasks, read the relevant guide from `~/.phonebase/skills/` before starting. Each guide is a Claude-standard skill living at `<name>/SKILL.md`:
+**Before operating any app** (Google Play, TikTok, Gmail, Instagram, WhatsApp, etc.), ALWAYS check if a dedicated skill exists:
 
-| Guide | Path | Read it when... |
-|---|---|---|
-| install-app | `~/.phonebase/skills/install-app/SKILL.md` | You need to search for, download, and install an Android app |
-| web-search | `~/.phonebase/skills/web-search/SKILL.md` | You need to search the web using the phone's browser |
+```
+pb skills list
+```
 
-Run `pb skills list` to see all installed guides with their enabled/disabled status. Only read guides that show `enabled`. Use `pb skills install <path-or-url>` to add third-party guides; they appear alongside the built-in ones. Additional guides may exist — run `ls ~/.phonebase/skills/` to see what's there, then read `<dir>/SKILL.md` inside.
+If the target app has a matching skill with `[enabled]` status, read its guide **before** doing anything:
+
+```
+cat ~/.phonebase/skills/<skill-name>/SKILL.md
+```
+
+App skills contain step-by-step automation flows, known UI patterns, and workarounds specific to that app. Following them is significantly more reliable than improvising with raw tap/swipe commands.
+
+**Example:** User says "search for WhatsApp on Google Play and install it"
+1. Run `pb skills list` → see `googleplay [enabled]`
+2. Read `~/.phonebase/skills/googleplay/SKILL.md`
+3. Follow the skill's search-and-install flow
+
+If no matching skill exists, fall back to the general Interaction Pattern above.
+
+### Built-in Skills
+
+These are always available after `pb skills install`:
+
+| Skill | When to use |
+|---|---|
+| install-app | Install, download, or open any Android app |
+| web-search | Search the web or browse a URL on the phone |
+
+### Installing More Skills
+
+```
+pb skills install googleplay    # install from skill hub by name
+pb skills install <path>        # install from local directory
+```
+
+Run `pb skills list` after installing to verify. Only use skills that show `[enabled]`.
