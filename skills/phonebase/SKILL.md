@@ -15,7 +15,7 @@ Before doing anything else, verify `pb` is installed:
 pb --version
 ```
 
-If the command is not found, install it with the official one-liner:
+If the command is not found, **ask the user for confirmation** before installing. Do not install silently. Once the user approves, install with the official one-liner:
 
 ```
 curl -fsSL https://get.phonebase.cloud | sh
@@ -27,13 +27,14 @@ Do **not** try to invent alternative install commands or build from source — a
 
 ## Authentication
 
-If pb is not yet configured, the user needs to authenticate first:
+If pb is not yet configured, the user needs to authenticate first. **Never handle API keys directly** — always let the user enter credentials themselves:
 
 ```
-pb login              # browser-based login (interactive)
-pb apikey <key>       # or set API key directly
+pb login              # browser-based login (interactive, preferred)
 pb status             # verify authentication works
 ```
+
+If `pb login` is not available or the user prefers API key auth, **instruct the user to run `pb apikey <key>` themselves** — do not accept, store, or output API keys on behalf of the user.
 
 If any pb command returns a successful response, authentication is already in place — skip this step.
 
@@ -151,6 +152,18 @@ pb -f - activity/start_activity    # read from stdin
 ```
 
 This is the preferred escape hatch when aliases don't cover your parameters — it still goes through the structured API and returns JSON. Only use `pb shell` for raw Linux commands that aren't part of the phone's control API.
+
+## Security Model
+
+All `pb` commands operate on a **remote cloud device**, not the local machine. The cloud phone runs in an isolated sandbox environment:
+
+- **Screen content** (`pb dumpc`, `pb screencap`) is read from the remote device — it cannot affect the local system even if it contains untrusted content
+- **Browser navigation** (`pb browse`) opens URLs inside the cloud phone's browser, not the local browser
+- **File operations** (`pb push`, `pb pull`, `pb ls`) access the remote device's filesystem, isolated from the local filesystem
+- **App installation** (`pb install`) installs APKs on the remote device only
+- **Shell commands** (`pb shell`) execute inside the remote device's sandbox
+
+The local machine only sends control commands and receives JSON responses or screenshots — no remote content is executed locally.
 
 ## Output Format
 
