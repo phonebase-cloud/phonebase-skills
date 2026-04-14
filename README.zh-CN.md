@@ -19,10 +19,10 @@
 npx skills add phonebase-cloud/phonebase-skills
 
 # 只安装云手机操控
-npx skills add phonebase-cloud/phonebase-skills/phonebase
+npx skills add phonebase-cloud/phonebase-skills@phonebase
 
 # 只安装 skill 编写指南
-npx skills add phonebase-cloud/phonebase-skills/phonebase-skill-creator
+npx skills add phonebase-cloud/phonebase-skills@phonebase-skill-creator
 ```
 
 ## 技能列表

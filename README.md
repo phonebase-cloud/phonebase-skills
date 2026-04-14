@@ -19,10 +19,10 @@ This repo provides agent skills that teach AI coding assistants (Claude Code, Cu
 npx skills add phonebase-cloud/phonebase-skills
 
 # Only cloud phone control
-npx skills add phonebase-cloud/phonebase-skills/phonebase
+npx skills add phonebase-cloud/phonebase-skills@phonebase
 
 # Only skill authoring guide
-npx skills add phonebase-cloud/phonebase-skills/phonebase-skill-creator
+npx skills add phonebase-cloud/phonebase-skills@phonebase-skill-creator
 ```
 
 ## Skills
