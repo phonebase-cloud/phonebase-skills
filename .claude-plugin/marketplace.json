@@ -1,0 +1,27 @@
+{
+  "name": "phonebase-skills",
+  "owner": {
+    "name": "PhoneBase",
+    "url": "https://phonebase.cloud"
+  },
+  "metadata": {
+    "description": "Agent skills for PhoneBase cloud phone CLI — control Android cloud phones and author pb CLI app skills",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "phonebase",
+      "source": "./skills/phonebase",
+      "skills": "./",
+      "strict": false,
+      "description": "Control Android cloud phones via the pb CLI — launch apps, tap/swipe/type, browse the web, install APKs, and automate mobile workflows"
+    },
+    {
+      "name": "phonebase-skill-creator",
+      "source": "./skills/phonebase-skill-creator",
+      "skills": "./",
+      "strict": false,
+      "description": "Write pb CLI app skills — directory layout, SDK API, scripting patterns, and testing"
+    }
+  ]
+}
